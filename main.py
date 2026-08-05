@@ -802,6 +802,7 @@ class Detector:
         self._natro_haste_animation_fallback_reads = 0
         self._honey_offset_cache: tuple[tuple[int, int] | None, float] = (None, 0.0)
         self._speed_multiplier_cache: tuple[tuple[float, float], float] = ((1.0, 0.0), 0.0)
+        self._speed_buff_seen_at: dict[str, float] = {}
         self._last_speed_detection_lines: list[str] = []
         self._revolution_vic_dataset: dict[str, dict] | None = None
         self._revolution_vic_dataset_loaded = False
@@ -4025,6 +4026,9 @@ class Detector:
         found_multipliers: list[tuple[str, float]] = []
         found_flat_bonuses: list[tuple[str, float]] = []
 
+        if speed_image is None:
+            speed_image = self.speed_buff_roi_image(cfg)
+
         natro_multiplier, natro_lines = self.natro_haste_speed_multiplier(speed_image)
         debug_lines.extend(natro_lines)
         if natro_multiplier > 1.0:
@@ -4047,20 +4051,38 @@ class Detector:
                 bounds = tuple(int(value) for value in bounds)
             elif not isinstance(bounds, tuple):
                 bounds = None
-            name, score, _x, _y = self.best_template_match(
-                templates,
-                scales=scales,
-                masked=bool(buff.get("masked", True)),
-                bounds=bounds,
-                source=str(buff.get("source", source_name)),
-                color=bool(buff.get("color", cfg.get("color", False))),
-            )
+            if speed_image is not None and str(buff.get("source", source_name)) == source_name:
+                name, score, _rect = self.best_template_match_in_image(
+                    speed_image,
+                    templates,
+                    scales=scales,
+                    masked=bool(buff.get("masked", True)),
+                    color=bool(buff.get("color", cfg.get("color", False))),
+                )
+            else:
+                name, score, _x, _y = self.best_template_match(
+                    templates,
+                    scales=scales,
+                    masked=bool(buff.get("masked", True)),
+                    bounds=bounds,
+                    source=str(buff.get("source", source_name)),
+                    color=bool(buff.get("color", cfg.get("color", False))),
+                )
             label = str(buff.get("name", name or "speed_buff"))
             best_scores.append((score, label, name))
-            debug_lines.append(f"{label}: score={score:.3f}, threshold={threshold:.3f}, best={name}")
+            detected_now = score >= threshold
+            hold_seconds = max(0.0, float(buff.get("hold_seconds", 0.0)))
+            if detected_now:
+                self._speed_buff_seen_at[label] = now
+            last_seen = self._speed_buff_seen_at.get(label, 0.0)
+            held = not detected_now and hold_seconds > 0.0 and now - last_seen <= hold_seconds
+            state = "detected" if detected_now else (f"held {now - last_seen:.1f}s" if held else "absent")
+            debug_lines.append(
+                f"{label}: score={score:.3f}, threshold={threshold:.3f}, best={name}, state={state}"
+            )
             if log:
                 print(f"speed buff {label}: score={score:.3f} threshold={threshold:.3f}", flush=True)
-            if score >= threshold:
+            if detected_now or held:
                 multiplier_value = max(0.1, float(buff.get("multiplier", 1.0)))
                 flat_value = max(0.0, float(buff.get("flat_bonus", buff.get("add_speed", 0.0))))
                 if multiplier_value != 1.0:
@@ -5078,7 +5100,11 @@ class ViciousFarm:
             self._speed_monitor_details = "detected: none"
             self._speed_monitor_updated_at = 0.0
         try:
-            initial_adjustment = self.detector.active_speed_adjustment(force=True)
+            speed_image = self.detector.speed_buff_roi_image(speed_cfg)
+            initial_adjustment = self.detector.active_speed_adjustment(
+                force=True,
+                speed_image=speed_image,
+            )
             initial_lines = list(self.detector._last_speed_detection_lines)
             initial_detail = "; ".join(
                 line for line in initial_lines
@@ -5105,7 +5131,11 @@ class ViciousFarm:
             last_debug_log = 0.0
             while not self._speed_monitor_stop.is_set():
                 try:
-                    adjustment = self.detector.active_speed_adjustment(force=True)
+                    speed_image = self.detector.speed_buff_roi_image(speed_cfg)
+                    adjustment = self.detector.active_speed_adjustment(
+                        force=True,
+                        speed_image=speed_image,
+                    )
                     detail_lines = list(self.detector._last_speed_detection_lines)
                     detail = "; ".join(
                         line for line in detail_lines
