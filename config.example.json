@@ -1,0 +1,1002 @@
+{
+  "roblox_place_id": 1537690962,
+  "server_hop": true,
+  "max_night_rejoins": 25,
+  "launch_method": "protocol",
+  "close_before_rejoin": false,
+  "api_rate_limit_random_deeplink": true,
+  "api_rate_limit_wait_seconds": 20,
+  "api_max_retries": 8,
+  "load_detection": {
+    "enabled": true,
+    "timeout_seconds": 60,
+    "timeout_after_blue_seconds": 45.0,
+    "join_transition_grace_seconds": 15.0,
+    "rejoin_on_timeout": true,
+    "blue_loading_templates": [
+      "blue_loading.png"
+    ],
+    "blue_color_detection": true,
+    "blue_rgb": [
+      37,
+      91,
+      164
+    ],
+    "blue_tolerance": 32,
+    "blue_min_ratio": 0.22,
+    "blue_screen_top_ratio": 0.45,
+    "blue_screen_bottom_ratio": 0.88,
+    "blue_template_fallback": false,
+    "blue_template_min_ratio": 0.12,
+    "blue_loading_appear_required": true,
+    "blue_disappear_samples": 1,
+    "loaded_blue_max_ratio": 0.08,
+    "loaded_texture_stddev_min": 14.0,
+    "loaded_required_samples": 2,
+    "loaded_marker_min_ratio": 0.01,
+    "loaded_marker_roi": {
+      "left": 0.0,
+      "right": 0.18,
+      "top": 0.055,
+      "bottom": 0.16
+    },
+    "loaded_top_bar_min_ratio": 0.045,
+    "loaded_top_bar_roi": {
+      "left": 0.3,
+      "right": 0.7,
+      "top": 0.035,
+      "bottom": 0.105
+    },
+    "texture_threshold": 0.85,
+    "sample_interval_seconds": 0.18,
+    "stable_required_samples": 2,
+    "stable_diff_threshold": 5.5,
+    "stable_fallback_enabled": false,
+    "stable_fallback_after_seconds": 3.0,
+    "loading_phrases": [
+      "loading",
+      "joining server",
+      "waiting for an available server",
+      "requesting server"
+    ]
+  },
+  "status_check_interval_seconds": 4,
+  "rejoin_status_phrases": [
+    "position in line",
+    "unknown status"
+  ],
+  "public_server_sort": "Desc",
+  "exclude_full_games": true,
+  "move_speed_studs_per_second": 29.0,
+  "speed_buffs": {
+    "enabled": true,
+    "apply_to_walk": true,
+    "only_natro_haste": true,
+    "monitor_enabled": true,
+    "monitor_interval_seconds": 0.5,
+    "test_duration_seconds": 60,
+    "monitor_max_age_seconds": 2.0,
+    "log_changes": true,
+    "debug": true,
+    "debug_interval_seconds": 6.0,
+    "debug_crops": true,
+    "debug_speed_icon_only": true,
+    "debug_crop_folder": "debug_speed_buffs",
+    "natro_haste_enabled": true,
+    "natro_digit_color": 243,
+    "natro_digit_color_tolerance": 0,
+    "natro_digit_match_threshold": 0.999,
+    "natro_digit_min_x": 20,
+    "natro_digit_max_x": 42,
+    "grey_runner_detection_enabled": true,
+    "grey_runner_min_line_cluster": 5,
+    "grey_runner_animation_fallback_enabled": true,
+    "grey_runner_animation_hold_seconds": 10.0,
+    "grey_runner_animation_max_fallback_reads": 2,
+    "grey_runner_animation_icon_threshold": 0.3,
+    "grey_runner_animation_min_grey_pixels": 250,
+    "runner_stack_mask_folder": "speed_runner_stack_masks_v4",
+    "runner_stack_detection_enabled": true,
+    "runner_stack_mask_threshold": 0.58,
+    "runner_stack_mask_min_pixels": 35,
+    "runner_stack_component_fallback_enabled": false,
+    "runner_stack_text_x1": 5,
+    "runner_stack_text_y1": 10,
+    "runner_stack_text_x2": 50,
+    "runner_stack_text_y2": 36,
+    "runner_stack_mask_s_max": 190,
+    "runner_stack_mask_v_max": 145,
+    "runner_stack_white_s_max": 80,
+    "runner_stack_white_v_min": 150,
+    "grey_runner_stack_left_offset": -2,
+    "grey_runner_stack_top_offset": -10,
+    "grey_runner_stack_right_offset": 52,
+    "grey_runner_stack_bottom_offset": 34,
+    "runner_icon_mask_folder": "speed_runner_icon_masks",
+    "runner_icon_mask_threshold": 0.55,
+    "runner_icon_mask_s_max": 80,
+    "runner_icon_mask_v_min": 105,
+    "runner_icon_mask_v_max": 245,
+    "grey_haste_min_x": 60,
+    "grey_haste_max_x": 520,
+    "grey_haste_min_y": 70,
+    "grey_haste_y_starts": [
+      40,
+      45,
+      50,
+      55,
+      60,
+      65,
+      70,
+      75,
+      80,
+      85,
+      90
+    ],
+    "grey_haste_digit_threshold": 0.58,
+    "speed_template_only": true,
+    "speed_template_detection_enabled": false,
+    "speed_template_match_threshold": 0.56,
+    "debug_all_speed_candidates": false,
+    "green_stack_detection_enabled": false,
+    "green_stack_template_folder": "speed_green_stack_masks",
+    "green_stack_match_threshold": 0.55,
+    "green_stack_match_margin": 0.08,
+    "green_stack_mask_height": 34,
+    "green_stack_max_dx": 145,
+    "green_stack_max_center_dy": 38,
+    "corner_detection_enabled": false,
+    "corner_template_folder": "speed_stack_corner",
+    "corner_match_threshold": 0.9,
+    "speed_anchor_gray_min_pixels": 700,
+    "haste_max_size": 90,
+    "stack_template_folder": "speed_stacks",
+    "stack_match_threshold": 0.72,
+    "haste_search_width": 520,
+    "haste_search_height": 155,
+    "combine": "max",
+    "flat_combine": "max",
+    "source": "roblox",
+    "color": true,
+    "threshold": 0.88,
+    "scales": [
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2,
+      1.35
+    ],
+    "bounds": [
+      0,
+      0,
+      760,
+      220
+    ],
+    "cache_seconds": 0.35,
+    "max_multiplier": 5.0,
+    "max_flat_bonus": 120.0,
+    "log": false,
+    "log_file": "speed_detection_log.txt",
+    "buffs": [
+      {
+        "name": "bear_morph",
+        "enabled": false,
+        "templates": [
+          "bear_morph_icons/bear_morph_01.png",
+          "bear_morph_icons/bear_morph_02.png",
+          "bear_morph_icons/bear_morph_03.png",
+          "bear_morph_icons/bear_morph_05.png",
+          "bear_morph_icons/bear_morph_06.png",
+          "bear_morph_icons/bear_morph_07.png",
+          "bear_morph_icons/bear_morph_08.png",
+          "bear_morph_icons/bear_morph_09.png"
+        ],
+        "threshold": 0.78,
+        "scales": [
+          0.85,
+          0.95,
+          1.0,
+          1.08,
+          1.18
+        ],
+        "masked": true,
+        "color": false,
+        "flat_bonus": 4.0
+      }
+    ],
+    "debug_artifacts": true,
+    "debug_candidate_crops": true,
+    "green_speed_hsv_lower": [
+      42,
+      55,
+      55
+    ],
+    "green_speed_hsv_upper": [
+      92,
+      255,
+      255
+    ],
+    "green_speed_min_area": 140,
+    "green_speed_min_size": 14,
+    "green_speed_max_size": 64,
+    "green_speed_min_y": 45,
+    "green_speed_max_y": 115,
+    "green_speed_candidate_limit": 14
+  },
+  "key_press_seconds": 0.08,
+  "paths": {
+    "enabled": false,
+    "folder": "paths",
+    "active": "example_path.json",
+    "ramp_forward_studs": 20.0,
+    "ramp_right_base_studs": 16.5,
+    "ramp_right_per_slot_studs": 35.0,
+    "movement_sleep_speed_scale_strength": 1.0,
+    "movement_integrator_interval_seconds": 0.015,
+    "log_movement_timing": true,
+    "movement_time_multiplier": 1.0,
+    "verbose_steps": false,
+    "verbose_input": false
+  },
+  "hive": {
+    "enabled": true,
+    "use_slot_path_detection": true,
+    "slot_path_folder": "paths/hives",
+    "slot_path_detect_settle_seconds": 0.03,
+    "slot_path_zoom_in_before_run": true,
+    "slot_path_refocus_before_run": false,
+    "slot_path_auto_claim": true,
+    "slot_path_blind_claim_after_run": true,
+    "slot_path_blind_claim_delay_seconds": 0.03,
+    "slot_path_claim_timeout_seconds": 4.0,
+    "slot_path_confirm_timeout_seconds": 2.5,
+    "slot_path_retry_on_missing_confirm": true,
+    "slot_path_claim_max_attempts": 2,
+    "slot_path_reset_respawn_seconds": 5.0,
+    "use_revolution_detection": true,
+    "revolution_claim_timeout_seconds": 35,
+    "revolution_approach_timeout_seconds": 7.0,
+    "revolution_approach_step_seconds": 0.18,
+    "revolution_scan_pause_seconds": 0.08,
+    "revolution_blind_slot_move_seconds": 1.2,
+    "drive_to_claim_timeout_seconds": 35,
+    "drive_to_claim_scan_interval_seconds": 0.0,
+    "drive_to_claim_press_delay_seconds": 0.0,
+    "drive_to_claim_press_repeats": 5,
+    "drive_to_claim_fast_tap_hold_seconds": 0.025,
+    "drive_to_claim_spam_e_while_moving": true,
+    "drive_to_claim_spam_e_interval_seconds": 0.045,
+    "drive_to_claim_spam_e_hold_seconds": 0.01,
+    "drive_to_claim_assume_claim_after_seconds": 0.25,
+    "drive_to_claim_assume_claim_after_taps": 3,
+    "drive_to_claim_post_press_scan_seconds": 0.25,
+    "empty_hive_align_timeout_seconds": 2.5,
+    "honey_offset_cache_seconds": 0.5,
+    "honey_offset_top_ratio": 0.35,
+    "honey_offset_threshold": 0.7,
+    "honey_offset_scales": [
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.25,
+      1.5,
+      1.75,
+      2.0
+    ],
+    "prompt_fallback_top_ratio": 0.55,
+    "prompt_fallback_threshold": 0.68,
+    "prompt_fallback_scales": [
+      0.75,
+      0.9,
+      1.0,
+      1.1,
+      1.25,
+      1.5,
+      1.75,
+      2.0,
+      2.5
+    ],
+    "blue_prompt_top_ratio": 0.06,
+    "blue_prompt_bottom_ratio": 0.22,
+    "blue_prompt_left_ratio": 0.3,
+    "blue_prompt_right_ratio": 0.7,
+    "blue_prompt_min_area": 3000,
+    "blue_prompt_partial_min_area": 650,
+    "blue_prompt_min_width_ratio": 0.12,
+    "blue_prompt_max_width_ratio": 0.35,
+    "blue_prompt_min_height_ratio": 0.035,
+    "blue_prompt_max_height_ratio": 0.11,
+    "blue_prompt_hsv_lower": [
+      95,
+      45,
+      80
+    ],
+    "blue_prompt_hsv_upper": [
+      120,
+      255,
+      255
+    ],
+    "claim_threshold": 0.86,
+    "approach_timeout_seconds": 18,
+    "approach_step_seconds": 0.3,
+    "detect_pause_seconds": 0.1,
+    "slot_move_seconds": 1.35,
+    "max_slots_to_check": 6,
+    "empty_hive_timeout_seconds": 16,
+    "empty_hive_align_tolerance_px": 90,
+    "empty_hive_side_step_seconds": 0.18,
+    "empty_hive_drive_step_seconds": 0.24,
+    "empty_hive_forward_step_seconds": 0.35,
+    "empty_hive_use_red_arrow_slots": true,
+    "empty_hive_red_arrow_slot_x_ratios": [
+      0.77,
+      0.635,
+      0.5,
+      0.364,
+      0.232,
+      0.095
+    ],
+    "empty_hive_red_arrow_roi_top_ratio": 0.135,
+    "empty_hive_red_arrow_roi_bottom_ratio": 0.305,
+    "empty_hive_red_arrow_roi_half_width_ratio": 0.06,
+    "empty_hive_red_arrow_min_area": 180,
+    "empty_hive_red_arrow_min_ratio": 0.006,
+    "empty_hive_red_arrow_max_total_ratio": 0.16,
+    "empty_hive_red_arrow_max_total_area": 12000,
+    "empty_hive_red_arrow_max_component_ratio": 0.11,
+    "empty_hive_red_arrow_max_component_area": 6500,
+    "empty_hive_red_arrow_min_width": 16,
+    "empty_hive_red_arrow_min_height": 8,
+    "empty_hive_red_arrow_debug_save_crops": false,
+    "empty_hive_red_arrow_debug_save_mask": false,
+    "empty_hive_pick": "rightmost",
+    "template_scales": [
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2,
+      1.35,
+      1.5,
+      1.75,
+      2.0,
+      2.5,
+      3.0
+    ],
+    "align_to_empty_hive_before_drive": true,
+    "empty_hive_red_arrow_detection": true,
+    "empty_hive_red_arrow_min_line_width_ratio": 0.18,
+    "empty_hive_red_arrow_min_line_height_ratio": 0.26,
+    "empty_hive_red_arrow_max_edge_touch_ratio": 0.35,
+    "empty_hive_red_arrow_head_top_ratio": 0.72,
+    "empty_hive_red_arrow_head_min_area": 500,
+    "empty_hive_red_arrow_head_min_width": 30,
+    "empty_hive_red_arrow_head_min_height": 16,
+    "empty_hive_red_arrow_head_max_area": 1400,
+    "empty_hive_red_arrow_head_max_width": 90,
+    "empty_hive_red_arrow_head_max_height": 60,
+    "empty_hive_red_arrow_head_min_aspect": 1.15,
+    "empty_hive_red_arrow_head_max_aspect": 4.5,
+    "empty_hive_red_arrow_line_min_angle": 18,
+    "empty_hive_red_arrow_line_max_angle": 92,
+    "empty_hive_red_arrow_hough_threshold": 35,
+    "empty_hive_red_arrow_hough_max_gap": 8,
+    "empty_hive_red_arrow_hough_min_length_ratio": 0.24,
+    "empty_hive_red_arrow_hough_max_mid_y_ratio": 0.74,
+    "empty_hive_red_arrow_hough_max_top_y_ratio": 0.62,
+    "empty_hive_red_arrow_allow_line_only": false,
+    "empty_hive_red_arrow_head_zone_left_ratio": 0.15,
+    "empty_hive_red_arrow_head_zone_right_ratio": 0.82,
+    "empty_hive_red_arrow_head_zone_top_ratio": 0.2,
+    "empty_hive_red_arrow_head_zone_bottom_ratio": 0.66,
+    "empty_hive_red_arrow_head_zone_min_area": 350,
+    "empty_hive_red_arrow_fallback_slot6_when_1_to_5_blocked": false
+  },
+  "camera_setup": {
+    "click_center": true,
+    "zoom_in_presses": 4,
+    "zoom_out_presses": 2,
+    "hive_zoom_out_presses": 18,
+    "hive_zoom_in_after_scan_presses": 12,
+    "hive_zoom_key_hold_seconds": 0.025,
+    "hive_zoom_gap_seconds": 0.01,
+    "hive_zoom_after_delay_seconds": 0.02,
+    "hive_red_arrow_rot_up_presses": 2,
+    "hive_red_arrow_after_delay_seconds": 0.04,
+    "hive_click_center_before_zoom": false,
+    "hive_click_center_delay_seconds": 0.03,
+    "rot_down_presses": 3,
+    "rot_up_after_detect": 2,
+    "key_hold_seconds": 0.06,
+    "between_keys_seconds": 0.025,
+    "click_center_delay_seconds": 0.04,
+    "night_key_hold_seconds": 0.035,
+    "night_between_keys_seconds": 0.012,
+    "night_after_camera_delay_seconds": 0.04,
+    "restore_after_night_check": true,
+    "night_restore_rot_up_presses": 3,
+    "night_restore_zoom_out_presses": 2,
+    "reset_after_hive_claim": true,
+    "after_hive_claim_rot_down_presses": 2,
+    "after_hive_claim_zoom_in_presses": 18,
+    "after_hive_claim_zoom_out_presses": 2,
+    "after_hive_claim_delay_seconds": 0.08
+  },
+  "night_probe": {
+    "base_width": 2560,
+    "base_height": 1440,
+    "x": 20,
+    "y": 70,
+    "width": 90,
+    "height": 28,
+    "max_average_rgb": 58
+  },
+  "battle_scan": {
+    "right_offset": 186,
+    "scan_width": 150,
+    "scan_height": 100,
+    "min_red_pixels": 180
+  },
+  "template_dir": "templates",
+  "defeat_templates": [
+    "vicdefeated.png",
+    "giftvicdefeated.png"
+  ],
+  "vicious_templates": {
+    "pepper": [],
+    "mountain": [],
+    "spider": [],
+    "cactus": [],
+    "rose": []
+  },
+  "rejoin_pre_join_sleep_seconds": 2,
+  "vicious_detection": {
+    "folder": "vic find",
+    "revolution_enabled": false,
+    "revolution_dataset": "models/revolution_vichop.bin",
+    "revolution_debug_save": false,
+    "save_detection_screenshots": false,
+    "save_field_scan_debug_images": false,
+    "global_defeated_monitor_enabled": true,
+    "global_defeated_monitor_poll_seconds": 0.2,
+    "vicious_left_message_poll_seconds": 0.2,
+    "vicious_left_red_precheck_enabled": true,
+    "vicious_left_precheck_log": true,
+    "vicious_left_precheck_log_interval_seconds": 5.0,
+    "vicious_left_red_precheck_region": [
+      0.62,
+      0.78,
+      1.0,
+      1.0
+    ],
+    "vicious_left_red_min_r": 130,
+    "vicious_left_red_max_g": 95,
+    "vicious_left_red_max_b": 95,
+    "vicious_left_red_min_rg_delta": 45,
+    "vicious_left_red_min_rb_delta": 45,
+    "vicious_left_red_min_pixels": 35,
+    "vicious_left_red_min_ratio": 0.00025,
+    "vicious_left_message_log": false,
+    "vicious_left_message_ocr_scale": 4.0,
+    "vicious_left_message_ocr_variants": [
+      "redmask",
+      "gray"
+    ],
+    "vicious_left_message_ocr_psm_values": [
+      6,
+      11
+    ],
+    "vicious_left_message_ocr_regions": [
+      [
+        0.62,
+        0.78,
+        1.0,
+        1.0
+      ],
+      [
+        0.72,
+        0.84,
+        1.0,
+        1.0
+      ]
+    ],
+    "ai_color_fallback": true,
+    "ai_color_fallback_when_model_missing": true,
+    "hold_shift_during_detection": false,
+    "shift_detection_mode": "toggle",
+    "shift_detect_settle_seconds": 0.1,
+    "shift_tap_hold_seconds": 0.035,
+    "rose_zoom_out_before_detection": true,
+    "field_image_threshold": 0.72,
+    "field_image_source": "roblox",
+    "field_image_color_match": true,
+    "field_image_template_fallback": false,
+    "field_image_scales": [
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2,
+      1.35
+    ],
+    "field_rois": {
+      "pepper": {
+        "left": 0.56,
+        "right": 1.0,
+        "top": 0.18,
+        "bottom": 0.68
+      },
+      "rose": {
+        "left": 0.52,
+        "right": 1.0,
+        "top": 0.08,
+        "bottom": 0.54
+      },
+      "cactus": {
+        "left": 0.5,
+        "right": 1.0,
+        "top": 0.12,
+        "bottom": 0.43
+      },
+      "mountaintop": {
+        "left": 0.58,
+        "right": 1.0,
+        "top": 0.16,
+        "bottom": 0.64
+      },
+      "spider": {
+        "left": 0.64,
+        "right": 1.0,
+        "top": 0.3,
+        "bottom": 0.68
+      },
+      "default": {
+        "left": 0.42,
+        "right": 1.0,
+        "top": 0.08,
+        "bottom": 0.62
+      }
+    },
+    "field_shape_masks": {
+      "rose": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.56
+        ],
+        [
+          0.86,
+          0.58
+        ],
+        [
+          0.64,
+          0.49
+        ],
+        [
+          0.47,
+          0.51
+        ],
+        [
+          0.3,
+          0.7
+        ],
+        [
+          0.0,
+          0.68
+        ]
+      ],
+      "cactus": [
+        [
+          0.12,
+          0.28
+        ],
+        [
+          0.54,
+          0.22
+        ],
+        [
+          0.76,
+          0.42
+        ],
+        [
+          0.88,
+          0.48
+        ],
+        [
+          0.66,
+          0.62
+        ],
+        [
+          0.28,
+          0.64
+        ],
+        [
+          0.09,
+          0.54
+        ]
+      ],
+      "spider": [
+        [
+          0.22,
+          0.3
+        ],
+        [
+          0.92,
+          0.22
+        ],
+        [
+          1.0,
+          0.54
+        ],
+        [
+          0.78,
+          0.62
+        ],
+        [
+          0.38,
+          0.6
+        ],
+        [
+          0.26,
+          0.5
+        ],
+        [
+          0.14,
+          0.44
+        ]
+      ]
+    },
+    "ai_debug_save": false,
+    "ai_debug_save_full_window": false,
+    "ai_debug_save_mask": false,
+    "ai_min_score": 170.0,
+    "ai_reject_edge_touch": true,
+    "ai_edge_margin_px": 6,
+    "ai_edge_reject_min_area": 80,
+    "ai_ignore_bottom_band_fields": [
+      "mountaintop"
+    ],
+    "ai_ignore_bottom_band_from": 0.8,
+    "ai_bottom_band_noise_max_height": 30,
+    "ai_bottom_band_noise_min_aspect": 2.0,
+    "ai_shape_filter_enabled": true,
+    "ai_min_compactness": 0.055,
+    "ai_max_major_minor_ratio": 5.0,
+    "ai_min_core_area": 8,
+    "ai_shape_score_weight": 80.0,
+    "ai_cyan_h_min": 78,
+    "ai_cyan_h_max": 112,
+    "ai_cyan_s_min": 42,
+    "ai_cyan_v_min": 35,
+    "ai_blue_over_red_min": 14,
+    "ai_min_component_s_mean": 50.0,
+    "ai_min_component_blue_red_mean": 18.0,
+    "ai_min_cyan_area": 10,
+    "ai_max_cyan_area": 2200,
+    "ai_field_component_limits": {
+      "cactus": {
+        "min_area": 180,
+        "max_area": 900,
+        "min_center_x_ratio": 0.14,
+        "max_aspect": 2.0,
+        "min_context_signal": 180,
+        "min_score": 190.0
+      },
+      "spider": {
+        "min_area": 60,
+        "max_area": 900,
+        "max_width": 90,
+        "max_height": 80,
+        "min_aspect": 0.35,
+        "max_aspect": 1.8,
+        "min_fill_ratio": 0.3,
+        "min_center_y_ratio": 0.43,
+        "max_center_x_ratio": 0.94,
+        "min_context_signal": 80,
+        "min_score": 145.0
+      }
+    },
+    "ai_min_width": 3,
+    "ai_min_height": 3,
+    "ai_max_width": 90,
+    "ai_max_height": 90,
+    "ai_min_aspect": 0.15,
+    "ai_max_aspect": 2.25,
+    "ai_context_pad": 28,
+    "ai_min_context_signal": 130,
+    "ai_dark_v_max": 80,
+    "ai_pale_blue_b_min": 90,
+    "ai_pale_blue_s_max": 130,
+    "field_chain": [
+      "pepper",
+      "mountaintop",
+      "spider",
+      "cactus",
+      "rose"
+    ],
+    "under_field_enabled": true,
+    "under_field_roi": {
+      "left": 0.04,
+      "right": 0.96,
+      "top": 0.34,
+      "bottom": 0.82
+    },
+    "under_field_cyan_h_min": 82,
+    "under_field_cyan_h_max": 112,
+    "under_field_cyan_s_min": 35,
+    "under_field_cyan_v_min": 35,
+    "under_field_min_cyan_area": 45,
+    "under_field_max_cyan_area": 2200,
+    "under_field_min_width": 6,
+    "under_field_min_height": 6,
+    "under_field_context_pad": 24,
+    "under_field_bright_v_min": 125,
+    "under_field_bright_s_max": 110,
+    "under_field_dark_v_max": 65,
+    "alert_popup_enabled": true,
+    "continue_after_vicious_found": true,
+    "rejoin_after_spawn_detection_failure": true,
+    "yolo_enabled": true,
+    "yolo_model": "models/vicious_yolo.onnx",
+    "yolo_input_size": 1280,
+    "yolo_confidence": 0.5,
+    "yolo_field_confidence": {
+      "spider": 0.5,
+      "pepper": 0.5,
+      "mountaintop": 0.5,
+      "cactus": 0.5,
+      "rose": 0.5
+    },
+    "yolo_fallback_to_color": false,
+    "field_detection_window_seconds": 0.9,
+    "field_detection_samples": 1,
+    "field_detection_sample_delay_seconds": 0.18,
+    "yolo_cpu_threads": 1,
+    "yolo_event_log_min_confidence": 0.5,
+    "defeated_message_log": false,
+    "defeated_yellow_banner_enabled": true,
+    "defeated_yellow_banner_log": true,
+    "defeated_yellow_banner_region": [
+      0.68,
+      0.5,
+      1.0,
+      0.92
+    ],
+    "defeated_yellow_min_width": 260,
+    "defeated_yellow_max_width": 460,
+    "defeated_yellow_min_height": 16,
+    "defeated_yellow_max_height": 36,
+    "defeated_yellow_min_aspect": 10.0,
+    "defeated_yellow_max_aspect": 24.0,
+    "defeated_yellow_min_right_edge_ratio": 0.92,
+    "defeated_yellow_min_text_pixels": 35,
+    "defeated_yellow_ocr_confirm_enabled": true,
+    "defeated_yellow_ocr_log": true,
+    "defeated_yellow_ocr_scale": 4.0,
+    "defeated_yellow_ocr_psm_values": [
+      7,
+      6
+    ],
+    "defeated_yellow_ocr_variants": [
+      "gray"
+    ],
+    "defeated_yellow_ocr_pad_x": 8,
+    "defeated_yellow_ocr_pad_y": 4,
+    "defeated_message_ocr_live_enabled": false,
+    "defeated_message_live_debug": false,
+    "defeated_message_live_debug_interval_seconds": 2.0,
+    "defeated_message_live_debug_max_samples": 120,
+    "message_ocr_scale": 2.0,
+    "message_ocr_crop_scale": 4.0,
+    "message_ocr_auto_install_tesseract": true,
+    "message_ocr_direct_install_enabled": true,
+    "message_ocr_tesseract_installer_url": "https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe",
+    "message_ocr_tesseract_installer_sha256": "F3FC4236425B690C8BE756F35793F77394EE004BE0A6460A440C754D892F68BC",
+    "message_ocr_download_timeout_seconds": 180.0,
+    "message_ocr_install_timeout_seconds": 240,
+    "message_ocr_tesseract_winget_ids": [
+      "tesseract-ocr.tesseract",
+      "UB-Mannheim.TesseractOCR"
+    ],
+    "attack_message_ocr_interval_seconds": 0.2,
+    "spawn_path_monitor_stop_mode": "safe_point",
+    "defeated_message_poll_seconds": 0.2,
+    "attack_message_ocr_live_regions": [
+      [
+        0.56,
+        0.84,
+        1.0,
+        1.0
+      ],
+      [
+        0.45,
+        0.76,
+        1.0,
+        1.0
+      ]
+    ],
+    "attack_message_ocr_regions": [
+      [
+        0.56,
+        0.84,
+        1.0,
+        1.0
+      ],
+      [
+        0.45,
+        0.76,
+        1.0,
+        1.0
+      ],
+      [
+        0.0,
+        0.78,
+        1.0,
+        1.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ]
+    ],
+    "defeated_message_ocr_regions": [
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.28
+      ],
+      [
+        0.18,
+        0.0,
+        0.82,
+        0.35
+      ],
+      [
+        0.45,
+        0.72,
+        1.0,
+        1.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ]
+    ],
+    "defeated_message_ocr_live_regions": [
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.28
+      ],
+      [
+        0.18,
+        0.0,
+        0.82,
+        0.35
+      ],
+      [
+        0.45,
+        0.72,
+        1.0,
+        1.0
+      ]
+    ],
+    "message_ocr_debug": false,
+    "attack_message_log": false
+  },
+  "spike_avoidance": {
+    "enabled": true,
+    "check_interval_seconds": 0.12,
+    "walk_tick_seconds": 0.05,
+    "roi": [
+      0.18,
+      0.18,
+      0.86,
+      0.88
+    ],
+    "player_x_ratio": 0.5,
+    "player_y_ratio": 0.54,
+    "danger_radius_ratio": 0.105,
+    "edge_margin_ratio": 0.05,
+    "screen_left_direction": "left",
+    "screen_right_direction": "right",
+    "screen_up_direction": "forward",
+    "screen_down_direction": "backward",
+    "red_min_r": 180,
+    "red_max_g": 95,
+    "red_max_b": 95,
+    "red_min_rg_delta": 75,
+    "red_min_rb_delta": 75,
+    "min_total_red_pixels": 120,
+    "min_component_area": 350,
+    "max_component_area": 65000,
+    "escape_hold_seconds": 0.16,
+    "escape_cooldown_seconds": 0.04,
+    "compensate_drift_enabled": true,
+    "compensate_drift_threshold_seconds": 0.08,
+    "compensate_drift_max_hold_seconds": 0.28,
+    "log": true,
+    "log_interval_seconds": 1.5
+  },
+  "discord": {
+    "enabled": false,
+    "webhook_url": "",
+    "send_screenshots": true,
+    "ping_on_vicious_detected": true,
+    "vicious_detected_ping": "@everyone",
+    "hourly_reports_enabled": true,
+    "hourly_report_interval_seconds": 3600
+  },
+  "stinger_tracking": {
+    "enabled": true,
+    "template_dir": "templates/stingers",
+    "template_threshold": 0.68,
+    "template_scales": [
+      0.85,
+      0.95,
+      1.05,
+      1.15,
+      1.3
+    ],
+    "hotbar_slots": 7,
+    "slot_size_height_ratio": 0.079,
+    "slot_gap_ratio": 0.16,
+    "hotbar_y_min_ratio": 0.74,
+    "hotbar_y_max_ratio": 0.91,
+    "hotbar_y_default_ratio": 0.83,
+    "hotbar_y_scan_step": 4,
+    "icon_search_left_ratio": 0.22,
+    "icon_search_top_ratio": 0.72,
+    "icon_search_right_ratio": 0.82,
+    "icon_search_bottom_ratio": 0.94,
+    "icon_match_threshold": 0.68,
+    "icon_ocr_left_pad_ratio": 0.2,
+    "icon_ocr_right_pad_ratio": 0.55,
+    "icon_ocr_top_pad_ratio": 0.0,
+    "icon_ocr_bottom_pad_ratio": 0.65,
+    "reward_notification_region": [
+      0.62,
+      0.56,
+      1.0,
+      0.98
+    ],
+    "reward_ocr_scale": 3.0,
+    "reward_ocr_contrast": 2.4,
+    "reward_ocr_psm_values": [
+      6,
+      11,
+      12,
+      4
+    ],
+    "number_ocr_scale": 5.0,
+    "number_ocr_contrast": 2.8,
+    "number_ocr_left_pad_ratio": 0.12,
+    "number_ocr_right_pad_ratio": 0.45,
+    "number_ocr_top_pad_ratio": 0.08,
+    "number_ocr_bottom_pad_ratio": 0.1,
+    "number_ocr_accept_without_x": false,
+    "debug_crop_pad_x": 72,
+    "debug_crop_pad_top": 44,
+    "debug_crop_pad_bottom": 34,
+    "discord_debug_on_initial_fail": false
+  }
+}

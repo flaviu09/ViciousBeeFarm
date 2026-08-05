@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+build/
+dist/
+ViciousBeeFarm_onedir/
+ViciousBeeFarm_onedir_optimized/
+ViciousBeeFarm_onedir_optimized.rar
+*.zip
+
+config.json
+*.log
+debug*/
+debug_*.png
+hourly_preview.png
+*_contact.png
+
+runs/
+yolo_dataset/
+paths_backup*/
+paths_safepoints_master/
+speed images/
+yolo*.pt
+export_yolo.py
+train_yolo.py

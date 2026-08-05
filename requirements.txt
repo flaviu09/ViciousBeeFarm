@@ -1,0 +1,9 @@
+keyboard>=0.13.5
+mss>=9.0.1
+Pillow>=10.0.0
+pyautogui>=0.9.54
+pygetwindow>=0.0.9
+requests>=2.31.0
+opencv-python>=4.8.0
+pytesseract>=0.3.13
+pymongo>=4.17.0
