@@ -800,6 +800,7 @@ class Detector:
         self._last_natro_haste_stack = 0
         self._last_natro_haste_seen_at = 0.0
         self._natro_haste_animation_fallback_reads = 0
+        self._last_natro_haste_detection: dict[str, object] = {}
         self._honey_offset_cache: tuple[tuple[int, int] | None, float] = (None, 0.0)
         self._speed_multiplier_cache: tuple[tuple[float, float], float] = ((1.0, 0.0), 0.0)
         self._speed_buff_seen_at: dict[str, float] = {}
@@ -2307,6 +2308,7 @@ class Detector:
 
     def natro_haste_speed_multiplier(self, image: Image.Image | None = None) -> tuple[float, list[str]]:
         cfg = self.cfg.get("speed_buffs", {}) or {}
+        self._last_natro_haste_detection = {}
         if not bool(cfg.get("natro_haste_enabled", True)):
             return 1.0, []
         if image is None:
@@ -2316,6 +2318,28 @@ class Detector:
         stack, score, detail = self.natro_haste_stack_from_image(image)
         if stack <= 0:
             return 1.0, [f"natro haste: none ({detail}, score={score:.3f})"]
+
+        rects: list[tuple[int, int, int, int]] = []
+        icon_candidates = self.natro_haste_line_candidates(image)
+        if icon_candidates:
+            x, y, w, h, _icon_score, _icon_detail = icon_candidates[0]
+            rects.append((x, y, min(image.width, x + min(w, 38)), min(image.height, y + min(h, 34))))
+        else:
+            template_match = re.search(r"speed-icon-template@(\d+),(\d+) size=(\d+)x(\d+)", detail)
+            if template_match:
+                x, y, w, h = [int(value) for value in template_match.groups()]
+                rects.append((x, y, min(image.width, x + w), min(image.height, y + h)))
+
+        digit_match = re.search(r"digit_crop=(\d+),(\d+),(\d+),(\d+)", detail)
+        if digit_match:
+            digit_rect = tuple(int(value) for value in digit_match.groups())
+            if digit_rect not in rects:
+                rects.append(digit_rect)
+        self._last_natro_haste_detection = {
+            "score": score,
+            "detail": detail,
+            "rects": rects,
+        }
         multiplier = 1.0 + max(0, stack) * 0.1
         return multiplier, [f"natro haste: x{stack} -> multiplier={multiplier:.2f} ({detail}, score={score:.3f})"]
 
@@ -4046,6 +4070,7 @@ class Detector:
                     "display_name": f"Haste x{max(1, round((natro_multiplier - 1.0) * 10.0))}",
                     "multiplier": natro_multiplier,
                     "flat_bonus": 0.0,
+                    **self._last_natro_haste_detection,
                 }
             )
 
@@ -4066,6 +4091,7 @@ class Detector:
                 bounds = tuple(int(value) for value in bounds)
             elif not isinstance(bounds, tuple):
                 bounds = None
+            _rect = None
             if speed_image is not None and str(buff.get("source", source_name)) == source_name:
                 name, score, _rect = self.best_template_match_in_image(
                     speed_image,
@@ -4112,6 +4138,8 @@ class Detector:
                         "template": name if detected_now else self._speed_buff_last_template.get(label),
                         "multiplier": multiplier_value,
                         "flat_bonus": flat_value,
+                        "score": score,
+                        "rects": [_rect] if detected_now and _rect is not None else [],
                     }
                 )
 
@@ -5535,7 +5563,46 @@ class ViciousFarm:
         cfg = self.cfg.get("speed_buffs", {}) or {}
         width = min(image.width, max(1, int(cfg.get("haste_search_width", 520))))
         height = min(image.height, max(1, int(cfg.get("haste_search_height", 155))))
-        return image.crop((0, 0, width, height))
+        annotated = image.convert("RGB").crop((0, 0, width, height))
+        draw = ImageDraw.Draw(annotated)
+        try:
+            font = ImageFont.truetype("arial.ttf", 14)
+        except Exception:
+            font = ImageFont.load_default()
+
+        for buff in self.detector._last_active_speed_buffs:
+            rects = buff.get("rects", [])
+            if not isinstance(rects, (list, tuple)):
+                continue
+            display_name = self.speed_buff_display_name(buff)
+            for index, rect in enumerate(rects):
+                if not isinstance(rect, (list, tuple)) or len(rect) != 4:
+                    continue
+                x1, y1, x2, y2 = [int(value) for value in rect]
+                x1 = max(0, min(width - 1, x1))
+                y1 = max(0, min(height - 1, y1))
+                x2 = max(x1 + 1, min(width, x2))
+                y2 = max(y1 + 1, min(height, y2))
+                color = (0, 235, 255) if index == 0 else (255, 225, 45)
+                draw.rectangle((x1, y1, x2 - 1, y2 - 1), outline=color, width=3)
+                if index != 0:
+                    continue
+                label = f"DETECTED: {display_name}"
+                text_box = draw.textbbox((0, 0), label, font=font)
+                text_w = text_box[2] - text_box[0]
+                text_h = text_box[3] - text_box[1]
+                label_x = min(x1, max(0, width - text_w - 8))
+                label_y = y1 - text_h - 8
+                if label_y < 0:
+                    label_y = min(height - text_h - 8, y2 + 4)
+                draw.rectangle(
+                    (label_x, label_y, min(width - 1, label_x + text_w + 7), label_y + text_h + 7),
+                    fill=(8, 12, 18),
+                    outline=color,
+                    width=1,
+                )
+                draw.text((label_x + 4, label_y + 3), label, fill=color, font=font)
+        return annotated
 
     @staticmethod
     def speed_buff_display_name(buff: dict[str, object]) -> str:
