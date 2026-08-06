@@ -944,7 +944,13 @@
     "ping_on_vicious_detected": true,
     "vicious_detected_ping": "@everyone",
     "hourly_reports_enabled": true,
-    "hourly_report_interval_seconds": 3600
+    "hourly_report_interval_seconds": 3600,
+    "speed_buffs_webhook_enabled": false,
+    "speed_buffs_webhook_url": "",
+    "speed_buffs_send_screenshots": true,
+    "speed_buffs_notify_on_clear": true,
+    "speed_buffs_notification_cooldown_seconds": 5.0,
+    "speed_buffs_clear_delay_seconds": 2.0
   },
   "stinger_tracking": {
     "enabled": true,

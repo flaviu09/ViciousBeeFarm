@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import io
 import json
 import math
+import os
 import queue
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 import traceback
+import zipfile
 from pathlib import Path
 from tkinter import (
     BOTH,
@@ -19,6 +25,7 @@ from tkinter import (
     NORMAL,
     RIGHT,
     Button,
+    Canvas,
     Checkbutton,
     Entry,
     Frame,
@@ -38,6 +45,8 @@ from tkinter import (
 
 from main import Config, DEFAULT_CONFIG, ViciousFarm
 
+import requests
+
 try:
     import keyboard
 except Exception:  # pragma: no cover - optional global hotkeys
@@ -47,6 +56,8 @@ except Exception:  # pragma: no cover - optional global hotkeys
 APP_TITLE = "Vicious Bee Farm"
 MAX_LOG_LINES = 1500
 MAX_RUN_LOG_BYTES = 8 * 1024 * 1024
+UPDATE_RELEASE_API = "https://api.github.com/repos/flaviu09/ViciousBeeFarm/releases/latest"
+UPDATE_ZIP_ASSET = "ViciousBeeFarm_onedir_optimized.zip"
 
 
 def app_dir() -> Path:
@@ -93,6 +104,7 @@ class App:
         self._log_line_start = True
         self.worker: threading.Thread | None = None
         self.stop_event = threading.Event()
+        self.update_in_progress = False
 
         self.enabled = IntVar(value=1)
         self.dry_run = IntVar(value=0)
@@ -142,6 +154,12 @@ class App:
         self.discord_screenshots = IntVar(value=1 if discord_cfg.get("send_screenshots", True) else 0)
         self.discord_hourly_reports = IntVar(value=1 if discord_cfg.get("hourly_reports_enabled", True) else 0)
         self.discord_webhook_url = StringVar(value=str(discord_cfg.get("webhook_url", "") or ""))
+        self.discord_speed_buffs_enabled = IntVar(
+            value=1 if discord_cfg.get("speed_buffs_webhook_enabled", False) else 0
+        )
+        self.discord_speed_buffs_webhook_url = StringVar(
+            value=str(discord_cfg.get("speed_buffs_webhook_url", "") or "")
+        )
         self.status = StringVar(value="Ready")
         self.last_vicious_alert = ""
 
@@ -231,6 +249,12 @@ class App:
             discord["send_screenshots"] = bool(self.discord_screenshots.get())
             discord["hourly_reports_enabled"] = bool(self.discord_hourly_reports.get())
             discord["hourly_report_interval_seconds"] = 3600
+            discord["speed_buffs_webhook_enabled"] = bool(self.discord_speed_buffs_enabled.get())
+            discord["speed_buffs_webhook_url"] = self.discord_speed_buffs_webhook_url.get().strip()
+            discord["speed_buffs_send_screenshots"] = True
+            discord["speed_buffs_notify_on_clear"] = True
+            discord["speed_buffs_notification_cooldown_seconds"] = 5.0
+            discord["speed_buffs_clear_delay_seconds"] = 2.0
             self.config_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
             self.config_data = data
             self.log(f"Saved settings to {self.config_path}\n")
@@ -240,8 +264,33 @@ class App:
             return False
 
     def build_ui(self):
-        outer = Frame(self.root, padx=14, pady=8)
-        outer.pack(fill=BOTH, expand=True)
+        page = Frame(self.root)
+        page.pack(fill=BOTH, expand=True)
+        self.page_canvas = Canvas(page, highlightthickness=0, background=self.root.cget("background"))
+        page_scrollbar = Scrollbar(page, orient="vertical", command=self.page_canvas.yview)
+        page_scrollbar.pack(side=RIGHT, fill=Y)
+        self.page_canvas.pack(side=LEFT, fill=BOTH, expand=True)
+        self.page_canvas.configure(yscrollcommand=page_scrollbar.set)
+
+        outer = Frame(self.page_canvas, padx=14, pady=8)
+        self.page_window = self.page_canvas.create_window((0, 0), window=outer, anchor="nw")
+        outer.bind(
+            "<Configure>",
+            lambda _event: self.page_canvas.configure(scrollregion=self.page_canvas.bbox("all")),
+        )
+        self.page_canvas.bind(
+            "<Configure>",
+            lambda event: self.page_canvas.itemconfigure(self.page_window, width=event.width),
+        )
+
+        def scroll_page(event):
+            if isinstance(event.widget, Text):
+                return
+            delta = int(-event.delta / 120) if event.delta else 0
+            if delta:
+                self.page_canvas.yview_scroll(delta, "units")
+
+        self.root.bind("<MouseWheel>", scroll_page, add="+")
 
         header = Frame(outer)
         header.pack(fill="x")
@@ -298,6 +347,19 @@ class App:
         )
         self.discord_test_btn = Button(discord, text="Test Discord", width=14, command=self.test_discord)
         self.discord_test_btn.grid(row=1, column=2, sticky="e", pady=(2, 0))
+        Checkbutton(discord, text="Speed buff channel", variable=self.discord_speed_buffs_enabled).grid(
+            row=2, column=0, sticky="w", pady=(2, 0)
+        )
+        Entry(discord, textvariable=self.discord_speed_buffs_webhook_url, width=48).grid(
+            row=2, column=1, sticky="we", padx=(8, 8), pady=(2, 0)
+        )
+        self.discord_speed_test_btn = Button(
+            discord,
+            text="Test Buffs",
+            width=14,
+            command=self.test_speed_buff_discord,
+        )
+        self.discord_speed_test_btn.grid(row=2, column=2, sticky="e", pady=(2, 0))
         discord.columnconfigure(1, weight=1)
 
         actions = Frame(outer)
@@ -331,6 +393,8 @@ class App:
         )
         self.stop_btn = Button(actions, text="Stop", state=DISABLED, command=self.request_stop)
         self.stop_btn.grid(row=1, column=6, sticky="ew", padx=2, pady=0)
+        self.update_btn = Button(actions, text="Update Macro", command=self.update_macro)
+        self.update_btn.grid(row=2, column=5, columnspan=2, sticky="ew", padx=2, pady=(3, 0))
         for column in range(7):
             actions.columnconfigure(column, weight=1)
 
@@ -428,6 +492,9 @@ class App:
         self.stingers_btn.config(state=state)
         self.safepoint_btn.config(state=state)
         self.discord_test_btn.config(state=state)
+        self.discord_speed_test_btn.config(state=state)
+        if not self.update_in_progress:
+            self.update_btn.config(state=state)
         self.stop_btn.config(state=NORMAL if running else DISABLED)
         self.status.set("Running" if running else "Ready")
         if not running:
@@ -448,6 +515,214 @@ class App:
             messagebox.showwarning(APP_TITLE, "Pune URL-ul webhook-ului Discord.")
             return
         self.run_worker("Discord Test", lambda: self.make_farm().test_discord_webhook())
+
+    def test_speed_buff_discord(self):
+        if not self.discord_speed_buffs_enabled.get():
+            messagebox.showwarning(APP_TITLE, "Activeaza Speed buff channel mai intai.")
+            return
+        if not self.discord_speed_buffs_webhook_url.get().strip():
+            messagebox.showwarning(APP_TITLE, "Pune URL-ul webhook-ului pentru speed buffs.")
+            return
+        self.run_worker(
+            "Speed Buff Discord Test",
+            lambda: self.make_farm().test_speed_buff_discord_webhook(),
+        )
+
+    @staticmethod
+    def safe_extract_update_zip(archive_path: Path, destination: Path) -> None:
+        destination = destination.resolve()
+        with zipfile.ZipFile(archive_path) as archive:
+            bad_member = archive.testzip()
+            if bad_member:
+                raise RuntimeError(f"Update archive is damaged: {bad_member}")
+            for member in archive.infolist():
+                target = (destination / member.filename).resolve()
+                if os.path.commonpath((str(destination), str(target))) != str(destination):
+                    raise RuntimeError("Update archive contains an unsafe path.")
+            archive.extractall(destination)
+
+    @staticmethod
+    def find_update_package_root(destination: Path) -> Path:
+        candidates = sorted(destination.rglob("ViciousBeeFarm.exe"), key=lambda path: len(path.parts))
+        for executable in candidates:
+            package_root = executable.parent
+            if (package_root / "_internal").is_dir() and (package_root / "config.example.json").is_file():
+                return package_root
+        raise RuntimeError("Downloaded package does not contain a complete ViciousBeeFarm build.")
+
+    @staticmethod
+    def powershell_literal(value: Path) -> str:
+        return "'" + str(value).replace("'", "''") + "'"
+
+    def write_update_helper(self, work_dir: Path, package_root: Path) -> Path:
+        work_dir.mkdir(parents=True, exist_ok=True)
+        target_dir = self.base.resolve()
+        backup_dir = work_dir / "backup"
+        script_path = work_dir / "apply_vicious_update.ps1"
+        script = f"""$ErrorActionPreference = 'Stop'
+$source = {self.powershell_literal(package_root.resolve())}
+$target = {self.powershell_literal(target_dir)}
+$backup = {self.powershell_literal(backup_dir.resolve())}
+$work = {self.powershell_literal(work_dir.resolve())}
+$log = Join-Path $target 'update.log'
+$errorLog = Join-Path $target 'update_error.txt'
+
+function Write-UpdateLog([string]$message) {{
+    Add-Content -LiteralPath $log -Value "$(Get-Date -Format s) $message"
+}}
+
+try {{
+    Start-Sleep -Seconds 3
+    New-Item -ItemType Directory -Force -Path $backup | Out-Null
+    $config = Join-Path $target 'config.json'
+    $paths = Join-Path $target 'paths'
+    if (Test-Path -LiteralPath $config) {{
+        Copy-Item -LiteralPath $config -Destination (Join-Path $backup 'config.json') -Force
+    }}
+    if (Test-Path -LiteralPath $paths) {{
+        Copy-Item -LiteralPath $paths -Destination (Join-Path $backup 'paths') -Recurse -Force
+    }}
+
+    Write-UpdateLog 'Installing downloaded update.'
+    & robocopy.exe $source $target /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP
+    $copyCode = $LASTEXITCODE
+    if ($copyCode -ge 8) {{
+        throw "robocopy failed with exit code $copyCode"
+    }}
+
+    $savedConfig = Join-Path $backup 'config.json'
+    $savedPaths = Join-Path $backup 'paths'
+    if (Test-Path -LiteralPath $savedConfig) {{
+        Copy-Item -LiteralPath $savedConfig -Destination $config -Force
+    }}
+    if (Test-Path -LiteralPath $savedPaths) {{
+        New-Item -ItemType Directory -Force -Path $paths | Out-Null
+        & robocopy.exe $savedPaths $paths /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP
+        if ($LASTEXITCODE -ge 8) {{
+            throw "path restore failed with exit code $LASTEXITCODE"
+        }}
+    }}
+
+    Remove-Item -LiteralPath $errorLog -Force -ErrorAction SilentlyContinue
+    Write-UpdateLog 'Update complete. Starting ViciousBeeFarm.exe.'
+    Start-Process -FilePath (Join-Path $target 'ViciousBeeFarm.exe') -WorkingDirectory $target
+}} catch {{
+    ($_ | Out-String) | Set-Content -LiteralPath $errorLog
+    Write-UpdateLog "Update failed: $($_.Exception.Message)"
+    Start-Process -FilePath (Join-Path $target 'ViciousBeeFarm.exe') -WorkingDirectory $target
+}}
+
+Start-Sleep -Seconds 2
+Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
+"""
+        script_path.write_text(script, encoding="utf-8-sig")
+        return script_path
+
+    def download_update(self) -> Path:
+        headers = {"User-Agent": "ViciousBeeFarm-Updater", "Accept": "application/vnd.github+json"}
+        self.log_queue.put("Checking GitHub Release for an update...\n")
+        response = requests.get(UPDATE_RELEASE_API, headers=headers, timeout=20)
+        response.raise_for_status()
+        release = response.json()
+        asset = next(
+            (item for item in release.get("assets", []) if str(item.get("name", "")) == UPDATE_ZIP_ASSET),
+            None,
+        )
+        if not asset:
+            raise RuntimeError(f"Release asset {UPDATE_ZIP_ASSET} is not available yet.")
+        expected_size = int(asset.get("size", 0) or 0)
+        if expected_size <= 0 or expected_size > 500 * 1024 * 1024:
+            raise RuntimeError("Release asset has an invalid size.")
+
+        work_dir = Path(tempfile.mkdtemp(prefix="vicious_update_"))
+        archive_path = work_dir / UPDATE_ZIP_ASSET
+        extract_dir = work_dir / "extracted"
+        extract_dir.mkdir()
+        downloaded = 0
+        next_progress = 10 * 1024 * 1024
+        try:
+            with requests.get(str(asset["browser_download_url"]), headers=headers, stream=True, timeout=120) as download:
+                download.raise_for_status()
+                with archive_path.open("wb") as handle:
+                    for chunk in download.iter_content(chunk_size=1024 * 1024):
+                        if not chunk:
+                            continue
+                        handle.write(chunk)
+                        downloaded += len(chunk)
+                        if downloaded >= next_progress:
+                            percent = min(100, round(downloaded * 100 / expected_size))
+                            self.log_queue.put(f"Downloading update: {percent}%\n")
+                            next_progress += 10 * 1024 * 1024
+            if downloaded != expected_size:
+                raise RuntimeError(f"Incomplete update download ({downloaded} of {expected_size} bytes).")
+            digest = str(asset.get("digest", "") or "")
+            if digest.startswith("sha256:"):
+                with archive_path.open("rb") as handle:
+                    actual = hashlib.file_digest(handle, "sha256").hexdigest()
+                if actual.lower() != digest.split(":", 1)[1].lower():
+                    raise RuntimeError("Update archive SHA-256 verification failed.")
+            self.log_queue.put("Download complete. Verifying package...\n")
+            self.safe_extract_update_zip(archive_path, extract_dir)
+            package_root = self.find_update_package_root(extract_dir)
+            return self.write_update_helper(work_dir, package_root)
+        except Exception:
+            shutil.rmtree(work_dir, ignore_errors=True)
+            raise
+
+    def update_macro(self) -> None:
+        if self.worker is not None and self.worker.is_alive():
+            messagebox.showwarning(APP_TITLE, "Opreste rutina inainte de update.")
+            return
+        if self.update_in_progress:
+            return
+        if not getattr(sys, "frozen", False):
+            messagebox.showwarning(APP_TITLE, "Butonul de update functioneaza din ViciousBeeFarm.exe.")
+            return
+        if not messagebox.askyesno(
+            APP_TITLE,
+            "Descarc ultima versiune? Configuratia si pathurile tale vor fi pastrate, apoi aplicatia se va redeschide.",
+        ):
+            return
+        if not self.save_config():
+            return
+        self.update_in_progress = True
+        self.update_btn.config(state=DISABLED)
+        self.status.set("Downloading update...")
+        self.log("\n=== Macro Update ===\n")
+
+        def worker() -> None:
+            try:
+                script_path = self.download_update()
+            except Exception as exc:
+                error = str(exc)
+
+                def show_error() -> None:
+                    self.update_in_progress = False
+                    self.update_btn.config(state=NORMAL)
+                    self.status.set("Update failed")
+                    messagebox.showerror(APP_TITLE, f"Update failed:\n{error}")
+
+                self.root.after(0, show_error)
+                return
+
+            def apply_update() -> None:
+                powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(
+                    subprocess, "CREATE_NEW_PROCESS_GROUP", 0
+                )
+                subprocess.Popen(
+                    [str(powershell), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)],
+                    cwd=str(script_path.parent),
+                    creationflags=creation_flags,
+                    close_fds=True,
+                )
+                self.status.set("Installing update...")
+                self.log("Update downloaded. Closing the app; it will reopen automatically.\n")
+                self.root.after(300, self.close)
+
+            self.root.after(0, apply_update)
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def run_worker(self, name: str, fn) -> bool:
         if not self.enabled.get():

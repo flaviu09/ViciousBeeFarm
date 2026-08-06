@@ -10,6 +10,8 @@ Macro pentru automatizarea cautarii Vicious Bee in Bee Swarm Simulator. Aplicati
 4. Seteaza viteza de miscare a contului si celelalte optiuni necesare.
 5. Foloseste `F1` pentru pornire si `F2` pentru oprire.
 
+Butonul `Update Macro` descarca ultima versiune din GitHub Release, pastreaza `config.json` si modificarile locale din `paths`, instaleaza update-ul dupa inchiderea aplicatiei si redeschide executabilul.
+
 Pachetul Release include runtime-ul Python, OpenCV, ONNX Runtime, modelele, template-urile, pathurile si Tesseract OCR portabil. Nu este necesara instalarea Python, rularea `pip` sau instalarea separata a Tesseract.
 
 Configuratia si detectia sunt calibrate pentru Windows pe rezolutia `1366x768`, cu scalarea ecranului la `100%`. Roblox trebuie sa fie instalat, autentificat si vizibil pe ecran. Viteza de miscare trebuie setata pentru fiecare cont.
@@ -27,6 +29,6 @@ Resursele externe din `models`, `paths`, `templates` si `vic find` trebuie pastr
 
 ## Observatii
 
-- Bear Morph este momentan dezactivat din calculul vitezei; detectia Haste este activa.
+- Detectia Haste si Bear Morph ajusteaza automat timpul pathurilor in functie de viteza efectiva.
 - Functionarea prin Remote Desktop necesita ca sesiunea Roblox sa ramana activa si randata.
 - Proiect independent, neafiliat cu Roblox sau Bee Swarm Simulator.

@@ -803,6 +803,8 @@ class Detector:
         self._honey_offset_cache: tuple[tuple[int, int] | None, float] = (None, 0.0)
         self._speed_multiplier_cache: tuple[tuple[float, float], float] = ((1.0, 0.0), 0.0)
         self._speed_buff_seen_at: dict[str, float] = {}
+        self._speed_buff_last_template: dict[str, str] = {}
+        self._last_active_speed_buffs: list[dict[str, object]] = []
         self._last_speed_detection_lines: list[str] = []
         self._revolution_vic_dataset: dict[str, dict] | None = None
         self._revolution_vic_dataset_loaded = False
@@ -3999,6 +4001,7 @@ class Detector:
     ) -> tuple[float, float]:
         cfg = self.cfg.get("speed_buffs", {}) or {}
         if not force and not bool(cfg.get("enabled", False)):
+            self._last_active_speed_buffs = []
             return 1.0, 0.0
         now = time.time()
         if not force:
@@ -4020,11 +4023,15 @@ class Detector:
         best_scores: list[tuple[float, str, str | None]] = []
         source_name = str(cfg.get("source", "roblox"))
         if source_name == "roblox" and self.roblox_window_rect() is None:
+            self._last_active_speed_buffs = []
+            self._speed_buff_seen_at.clear()
+            self._speed_buff_last_template.clear()
             self._last_speed_detection_lines = ["source: roblox window not found", "detected: none"]
             return 1.0, 0.0
         debug_lines.append(f"source: {source_name}")
         found_multipliers: list[tuple[str, float]] = []
         found_flat_bonuses: list[tuple[str, float]] = []
+        active_buffs: list[dict[str, object]] = []
 
         if speed_image is None:
             speed_image = self.speed_buff_roi_image(cfg)
@@ -4033,6 +4040,14 @@ class Detector:
         debug_lines.extend(natro_lines)
         if natro_multiplier > 1.0:
             found_multipliers.append(("natro_haste", natro_multiplier))
+            active_buffs.append(
+                {
+                    "name": "natro_haste",
+                    "display_name": f"Haste x{max(1, round((natro_multiplier - 1.0) * 10.0))}",
+                    "multiplier": natro_multiplier,
+                    "flat_bonus": 0.0,
+                }
+            )
 
         for buff in buffs:
             if not isinstance(buff, dict):
@@ -4074,6 +4089,8 @@ class Detector:
             hold_seconds = max(0.0, float(buff.get("hold_seconds", 0.0)))
             if detected_now:
                 self._speed_buff_seen_at[label] = now
+                if name:
+                    self._speed_buff_last_template[label] = name
             last_seen = self._speed_buff_seen_at.get(label, 0.0)
             held = not detected_now and hold_seconds > 0.0 and now - last_seen <= hold_seconds
             state = "detected" if detected_now else (f"held {now - last_seen:.1f}s" if held else "absent")
@@ -4089,6 +4106,14 @@ class Detector:
                     found_multipliers.append((label, multiplier_value))
                 if flat_value > 0.0:
                     found_flat_bonuses.append((label, flat_value))
+                active_buffs.append(
+                    {
+                        "name": label,
+                        "template": name if detected_now else self._speed_buff_last_template.get(label),
+                        "multiplier": multiplier_value,
+                        "flat_bonus": flat_value,
+                    }
+                )
 
         if not found_multipliers:
             multiplier = 1.0
@@ -4133,6 +4158,7 @@ class Detector:
                 )
             )
         self._last_speed_detection_lines = debug_lines
+        self._last_active_speed_buffs = active_buffs
         return adjustment
 
     def blue_loading_visible(self) -> bool:
@@ -5068,6 +5094,9 @@ class ViciousFarm:
         self._speed_monitor_adjustment: tuple[float, float] = (1.0, 0.0)
         self._speed_monitor_details = "detected: none"
         self._speed_monitor_updated_at = 0.0
+        self._speed_discord_signature: tuple[tuple[str, float, float], ...] = ()
+        self._speed_discord_last_sent_at = 0.0
+        self._speed_discord_clear_since = 0.0
         self._discord_queue: "queue.Queue[tuple[str, dict, bytes | None]]" = queue.Queue(maxsize=30)
         self._discord_worker_lock = Lock()
         self._discord_worker_thread: Thread | None = None
@@ -5114,6 +5143,7 @@ class ViciousFarm:
                 self._speed_monitor_adjustment = initial_adjustment
                 self._speed_monitor_details = initial_detail
                 self._speed_monitor_updated_at = time.time()
+            self.maybe_discord_notify_speed_buffs(initial_adjustment, speed_image)
             if bool(speed_cfg.get("log_changes", True)):
                 print(
                     f"Speed buff initial scan: x{initial_adjustment[0]:.2f} "
@@ -5145,6 +5175,7 @@ class ViciousFarm:
                         self._speed_monitor_adjustment = adjustment
                         self._speed_monitor_details = detail
                         self._speed_monitor_updated_at = time.time()
+                    self.maybe_discord_notify_speed_buffs(adjustment, speed_image)
                     if bool(speed_cfg.get("log_changes", True)) and detail != last_detail:
                         print(f"Speed buff monitor: x{adjustment[0]:.2f} +{adjustment[1]:.1f} ({detail})", flush=True)
                         last_detail = detail
@@ -5463,10 +5494,27 @@ class ViciousFarm:
             print("Discord webhook enabled but URL is empty.", flush=True)
             return
 
+        ping_text = self.discord_ping_text_for_event(event)
+        self._discord_notify_to_webhook(
+            webhook_url,
+            event,
+            message,
+            screenshot=screenshot,
+            send_screenshot=bool(discord_cfg.get("send_screenshots", True)),
+            ping_text=ping_text,
+        )
+
+    def _discord_notify_to_webhook(
+        self,
+        webhook_url: str,
+        event: str,
+        message: str,
+        screenshot: Image.Image | None = None,
+        send_screenshot: bool = True,
+        ping_text: str = "",
+    ) -> None:
         image_bytes: bytes | None = None
-        # A screenshot is sent only for events that explicitly provide one.
-        # Status-only updates such as rejoin and loading must remain text-only.
-        if screenshot is not None and bool(discord_cfg.get("send_screenshots", True)):
+        if screenshot is not None and send_screenshot:
             try:
                 frame = screenshot.copy()
                 buffer = io.BytesIO()
@@ -5476,11 +5524,117 @@ class ViciousFarm:
                 print(f"Discord screenshot unavailable: {exc}", flush=True)
 
         payload = self.discord_embed_payload(event, message, image_bytes is not None)
-        ping_text = self.discord_ping_text_for_event(event)
         if ping_text:
             payload["content"] = ping_text
             payload["allowed_mentions"] = self.discord_allowed_mentions_for_ping(ping_text)
         self._queue_discord_webhook(webhook_url, payload, image_bytes)
+
+    def speed_buff_discord_crop(self, image: Image.Image | None) -> Image.Image | None:
+        if image is None:
+            return None
+        cfg = self.cfg.get("speed_buffs", {}) or {}
+        width = min(image.width, max(1, int(cfg.get("haste_search_width", 520))))
+        height = min(image.height, max(1, int(cfg.get("haste_search_height", 155))))
+        return image.crop((0, 0, width, height))
+
+    @staticmethod
+    def speed_buff_display_name(buff: dict[str, object]) -> str:
+        display_name = str(buff.get("display_name", "") or "").strip()
+        if display_name:
+            return display_name
+        label = str(buff.get("name", "speed_buff") or "speed_buff")
+        if label == "bear_morph":
+            template = str(buff.get("template", "") or "").split("@", 1)[0]
+            morph = Path(template).stem.lower()
+            known = {
+                "black": "Black Bear Morph",
+                "brown": "Brown Bear Morph",
+                "panda": "Panda Bear Morph",
+                "polar": "Polar Bear Morph",
+                "mother": "Mother Bear Morph",
+                "science": "Science Bear Morph",
+            }
+            return known.get(morph, "Bear Morph")
+        return label.replace("_", " ").title()
+
+    def speed_buff_status_message(self, multiplier: float, flat_bonus: float) -> str:
+        buffs = list(self.detector._last_active_speed_buffs)
+        names = [self.speed_buff_display_name(buff) for buff in buffs]
+        manual_speed = float(self.cfg.get("move_speed_studs_per_second", PATH_REFERENCE_SPEED))
+        effective_speed, speed_info = effective_walk_speed(manual_speed, multiplier, flat_bonus)
+        path_scale = PATH_REFERENCE_SPEED / effective_speed * path_movement_time_multiplier(self.cfg)
+        permanent = speed_info.permanent_multiplier
+        return (
+            f"**Buffs:** {', '.join(names) if names else 'None'}\n"
+            f"**Speed set in macro:** {manual_speed:.1f}\n"
+            f"**Base speed:** {speed_info.base_speed:.1f}\n"
+            f"**Permanent speed multiplier:** x{permanent:.3f}\n"
+            f"**Temporary adjustment:** x{multiplier:.2f} +{flat_bonus:.1f}\n"
+            f"**Effective speed:** {effective_speed:.1f}\n"
+            f"**Path time scale:** x{path_scale:.3f}"
+        )
+
+    def maybe_discord_notify_speed_buffs(
+        self,
+        adjustment: tuple[float, float],
+        speed_image: Image.Image | None,
+    ) -> None:
+        discord_cfg = self.cfg.get("discord", {}) or {}
+        if not bool(discord_cfg.get("speed_buffs_webhook_enabled", False)):
+            return
+        webhook_url = str(discord_cfg.get("speed_buffs_webhook_url", "") or "").strip()
+        if not webhook_url:
+            return
+
+        multiplier, flat_bonus = adjustment
+        buffs = list(self.detector._last_active_speed_buffs)
+        signature = tuple(
+            (
+                self.speed_buff_display_name(buff),
+                round(float(buff.get("multiplier", 1.0)), 2),
+                round(float(buff.get("flat_bonus", 0.0)), 1),
+            )
+            for buff in buffs
+        )
+        now = time.monotonic()
+        cooldown = max(0.0, float(discord_cfg.get("speed_buffs_notification_cooldown_seconds", 5.0)))
+        clear_delay = max(0.0, float(discord_cfg.get("speed_buffs_clear_delay_seconds", 2.0)))
+
+        if signature:
+            self._speed_discord_clear_since = 0.0
+            if signature == self._speed_discord_signature or now - self._speed_discord_last_sent_at < cooldown:
+                return
+            self._discord_notify_to_webhook(
+                webhook_url,
+                "Speed Buff Detected",
+                self.speed_buff_status_message(multiplier, flat_bonus),
+                screenshot=self.speed_buff_discord_crop(speed_image),
+                send_screenshot=bool(discord_cfg.get("speed_buffs_send_screenshots", True)),
+            )
+            self._speed_discord_signature = signature
+            self._speed_discord_last_sent_at = now
+            print(f"Speed buff Discord notification queued: {', '.join(item[0] for item in signature)}", flush=True)
+            return
+
+        if not self._speed_discord_signature:
+            self._speed_discord_clear_since = 0.0
+            return
+        if self._speed_discord_clear_since <= 0.0:
+            self._speed_discord_clear_since = now
+            return
+        if now - self._speed_discord_clear_since < clear_delay:
+            return
+        if bool(discord_cfg.get("speed_buffs_notify_on_clear", True)):
+            self._discord_notify_to_webhook(
+                webhook_url,
+                "Speed Buffs Ended",
+                self.speed_buff_status_message(1.0, 0.0),
+                send_screenshot=False,
+            )
+            print("Speed buff ended Discord notification queued.", flush=True)
+        self._speed_discord_signature = ()
+        self._speed_discord_last_sent_at = now
+        self._speed_discord_clear_since = 0.0
 
     def _queue_discord_webhook(self, webhook_url: str, payload: dict, image_bytes: bytes | None) -> None:
         with self._discord_worker_lock:
@@ -5583,6 +5737,24 @@ class ViciousFarm:
     def test_discord_webhook(self) -> None:
         self.discord_notify("Test", "Webhook connected. Screenshots are enabled according to your setting.")
         print("Discord webhook test queued.", flush=True)
+
+    def test_speed_buff_discord_webhook(self) -> None:
+        discord_cfg = self.cfg.get("discord", {}) or {}
+        webhook_url = str(discord_cfg.get("speed_buffs_webhook_url", "") or "").strip()
+        if not bool(discord_cfg.get("speed_buffs_webhook_enabled", False)) or not webhook_url:
+            print("Speed buff Discord webhook is disabled or empty.", flush=True)
+            return
+        speed_cfg = self.cfg.get("speed_buffs", {}) or {}
+        speed_image = self.detector.speed_buff_roi_image(speed_cfg)
+        adjustment = self.detector.active_speed_adjustment(force=True, speed_image=speed_image)
+        self._discord_notify_to_webhook(
+            webhook_url,
+            "Speed Buff Channel Test",
+            self.speed_buff_status_message(*adjustment),
+            screenshot=self.speed_buff_discord_crop(speed_image),
+            send_screenshot=bool(discord_cfg.get("speed_buffs_send_screenshots", True)),
+        )
+        print("Speed buff Discord webhook test queued.", flush=True)
 
     def discord_notify_vicious_left(self, field: str) -> None:
         screenshot: Image.Image | None = None
